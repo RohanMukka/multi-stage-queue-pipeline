@@ -7,6 +7,7 @@
 #include <string>
 #include <regex>
 #include <algorithm>
+#include <unordered_map>
 
 using namespace std;
 
@@ -37,20 +38,56 @@ int parseTasks(const string& taskStr) {
     return total;
 }
 
+// Read config CSV into a map
+unordered_map<string,string> readConfig(const string& cfgFile) {
+    unordered_map<string,string> config;
+    ifstream infile(cfgFile);
+    if (!infile.is_open()) {
+        cerr << "Error opening config file: " << cfgFile << endl;
+        exit(1);
+    }
+
+    string line;
+    while (getline(infile, line)) {
+        if (line.empty()) continue;
+        stringstream ss(line);
+        string key, value;
+        getline(ss, key, ',');
+        getline(ss, value, ',');
+        key = trim(key);
+        value = trim(value);
+        if (!key.empty() && key != "parameter") {
+            config[key] = value;
+        }
+    }
+    infile.close();
+    return config;
+}
+
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cerr << "Usage: " << argv[0] << " <jobs_file.csv>\n";
+    if (argc < 3) {
+        cerr << "Usage: " << argv[0] << " <jobs_file.csv> <simple-queue-config.csv>\n";
         return 1;
     }
 
     string filename = argv[1];
+    string cfgFile = argv[2];
+
+    // --- Read config ---
+    auto config = readConfig(cfgFile);
+
+    int limit = stoi(config["limit"]);
+    int max_queue_size = stoi(config["max_queue_size"]);
+    string queue_id = config["queue_id"];
+    string server_id = config["server_id"];
+
+    // --- Read jobs file ---
     ifstream infile(filename);
     if (!infile.is_open()) {
-        cerr << "Error opening file: " << filename << endl;
+        cerr << "Error opening jobs file: " << filename << endl;
         return 1;
     }
 
-    // --- Parse jobs ---
     vector<Job> jobs;
     string line;
     while (getline(infile, line)) {
@@ -67,12 +104,8 @@ int main(int argc, char* argv[]) {
         arrivalStr = trim(arrivalStr);
         taskStr = trim(taskStr);
 
-        // Skip header if present
-        if (id == "job_id" || arrivalStr == "arrival") {
-            continue;
-        }
+        if (id == "job_id" || arrivalStr == "arrival") continue;
 
-        // Trim surrounding quotes from taskStr
         if (!taskStr.empty() && taskStr.front() == '"') {
             taskStr = taskStr.substr(1, taskStr.size() - 2);
         }
@@ -90,15 +123,12 @@ int main(int argc, char* argv[]) {
 
     // --- Simulation setup ---
     int clock = 0;
-    int limit = 200;
-    int max_queue_size = 10;
     int errors = 0;
 
     queue<Job> work_queue;
     string job_in_service = "";
     int service_time_left = 0;
 
-    // --- Open output files ---
     ofstream qmet("qmet.csv");
     qmet << "time-step,queue-sys-id,num-jobs-in-queue,num-jobs-in-service,num-of-errors\n";
 
@@ -106,37 +136,34 @@ int main(int argc, char* argv[]) {
 
     // --- Simulation loop ---
     while (clock < limit) {
-        // Get only the filename (remove path if any)
         string input_edge = filename;
         size_t pos = filename.find_last_of("/\\");
-        if (pos != string::npos) {
-            input_edge = filename.substr(pos + 1);
-        }
+        if (pos != string::npos) input_edge = filename.substr(pos + 1);
 
         // --- Handle new arrivals ---
         while (!jobs.empty() && jobs.front().arrival == clock) {
             Job j = jobs.front();
             jobs.erase(jobs.begin());
 
-            // Use the input file name as the ARRIVE-VIA edge
-            jlog << clock << " " << j.id << " IN q0 ARRIVE-VIA " << input_edge << "\n";
+            jlog << clock << " " << j.id << " IN " << queue_id << " ARRIVE-VIA " << input_edge << "\n";
 
             if ((int)work_queue.size() >= max_queue_size) {
                 errors++;
-                jlog << clock << " " << j.id << " IN q0 ERROR QUEUE-FULL\n";
+                jlog << clock << " " << j.id << " IN " << queue_id << " ERROR QUEUE-FULL\n";
             } else {
                 work_queue.push(j);
             }
         }
-
 
         // --- Process server job ---
         if (!job_in_service.empty()) {
             service_time_left--;
 
             if (service_time_left == 0) {
-                jlog << clock << " " << job_in_service << " IN q0 TASK-END 0 \"W " << service_time_left+1 << "\"\n";
-                jlog << clock << " " << job_in_service << " IN q0 EXITS-SERVER 0\n";
+                jlog << clock << " " << job_in_service << " IN " << queue_id 
+                     << " TASK-END 0 \"W " << service_time_left+1 << "\"\n";
+                jlog << clock << " " << job_in_service << " IN " << queue_id 
+                     << " EXITS-SERVER " << server_id << "\n";
                 job_in_service = "";
             }
         }
@@ -148,14 +175,16 @@ int main(int argc, char* argv[]) {
             job_in_service = j.id;
             service_time_left = j.service;
 
-            jlog << clock << " " << job_in_service << " IN q0 ENTERS-SERVER 0\n";
-            jlog << clock << " " << job_in_service << " IN q0 TASK-START 0 \"W " << service_time_left << "\"\n";
+            jlog << clock << " " << job_in_service << " IN " << queue_id 
+                 << " ENTERS-SERVER " << server_id << "\n";
+            jlog << clock << " " << job_in_service << " IN " << queue_id 
+                 << " TASK-START 0 \"W " << service_time_left << "\"\n";
         }
 
         // --- Write queue metrics ---
         int num_in_queue = (int)work_queue.size();
         int num_in_service = job_in_service.empty() ? 0 : 1;
-        qmet << clock << ",0," << num_in_queue << "," 
+        qmet << clock << "," << queue_id << "," << num_in_queue << "," 
              << num_in_service << "," << errors << "\n";
 
         clock++;
