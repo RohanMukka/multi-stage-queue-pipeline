@@ -1,6 +1,11 @@
 # visualizer.py - Workload Visualizer for Objective A
 # Requires: pandas, matplotlib
+'''
+1. python visualizer.py --infile workloads/in0.csv --hist arrival --bins 10 --out workloads/arrival_hist.png
 
+2. python visualizer.py --infile workloads/in0.csv --scat arrival,num_tasks --out workloads/arrivals_vs_tasks.png
+
+'''
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt

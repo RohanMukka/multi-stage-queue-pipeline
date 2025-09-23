@@ -1,6 +1,21 @@
 # generator_csv.py  —  CSV workload generator for Objective A
-#   python generator_csv.py --start 0 --end 100 --dist poisson --lam 3 --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 --out workloads/in0.csv
+# python generator_csv.py --start 0 --end 100 --dist poisson --lam 3 --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 --out workloads/in0.csv
+'''
+python generator.py --start 0 --end 100 --dist poisson --lam 3 `
+  --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 `
+  --out workloads/in_poisson.csv
 
+  python generator.py --start 0 --end 100 --dist uniform --lam 4 `
+  --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 `
+  --out workloads/in_uniform.csv
+python generator.py --start 0 --end 100 --dist normal --mu 5 --sigma 2 `
+  --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 `
+  --out workloads/in_normal.csv
+python generator.py --start 0 --end 100 --dist geometric --p 0.3 `
+  --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 `
+  --out workloads/in_geometric.csv
+
+'''
 import argparse, csv, json, os, random
 from typing import List
 import numpy as np
