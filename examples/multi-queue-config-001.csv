@@ -1,0 +1,6 @@
+Queue sys ID, Max Queue Size, # of Servers, Server Function, Server Function Rate, Source, Sink, Edges in, Edges out
+q0,8,1,Sub-10,10,in0.wl,out0.wl,[],[q1]
+q1,10,2,Sub-20,15,in1.wl,out1.wl,[q0],[q2,q3]
+q2,12,1,Sub-15,12,in2.wl,out2.wl,[q1],[q4]
+q3,6,1,Sub-5,8,in3.wl,out3.wl,[q1],[q4]
+q4,20,3,Sub-30,20,in4.wl,out4.wl,[q2,q3],[]
