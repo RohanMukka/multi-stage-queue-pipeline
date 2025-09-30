@@ -121,13 +121,17 @@ int main(int argc, char* argv[]) {
     }
     infile.close();
 
-    // --- Simulation setup ---
+        // --- Simulation setup ---
     int clock = 0;
     int errors = 0;
 
     queue<Job> work_queue;
     string job_in_service = "";
     int service_time_left = 0;
+
+    // --- Load new server function config ---
+    int server_function_rate = stoi(config["server_function_rate"]);
+    int server_function = stoi(config["server_function"]);
 
     ofstream qmet("qmet.csv");
     qmet << "time-step,queue-sys-id,num-jobs-in-queue,num-jobs-in-service,num-of-errors\n";
@@ -157,14 +161,16 @@ int main(int argc, char* argv[]) {
 
         // --- Process server job ---
         if (!job_in_service.empty()) {
-            service_time_left--;
-
-            if (service_time_left == 0) {
-                jlog << clock << " " << job_in_service << " IN " << queue_id 
-                     << " TASK-END 0 \"W " << service_time_left+1 << "\"\n";
-                jlog << clock << " " << job_in_service << " IN " << queue_id 
-                     << " EXITS-SERVER " << server_id << "\n";
-                job_in_service = "";
+            // only decrement when rate condition is met
+            if (clock % server_function_rate == server_function_rate - 1) {
+                service_time_left -= server_function;
+                if (service_time_left <= 0) {
+                    jlog << clock << " " << job_in_service << " IN " << queue_id
+                         << " TASK-END 0 \"W " << max(0, service_time_left) << "\"\n";
+                    jlog << clock << " " << job_in_service << " IN " << queue_id
+                         << " EXITS-SERVER " << server_id << "\n";
+                    job_in_service = "";
+                }
             }
         }
 
@@ -175,16 +181,16 @@ int main(int argc, char* argv[]) {
             job_in_service = j.id;
             service_time_left = j.service;
 
-            jlog << clock << " " << job_in_service << " IN " << queue_id 
+            jlog << clock << " " << job_in_service << " IN " << queue_id
                  << " ENTERS-SERVER " << server_id << "\n";
-            jlog << clock << " " << job_in_service << " IN " << queue_id 
+            jlog << clock << " " << job_in_service << " IN " << queue_id
                  << " TASK-START 0 \"W " << service_time_left << "\"\n";
         }
 
         // --- Write queue metrics ---
         int num_in_queue = (int)work_queue.size();
         int num_in_service = job_in_service.empty() ? 0 : 1;
-        qmet << clock << "," << queue_id << "," << num_in_queue << "," 
+        qmet << clock << "," << queue_id << "," << num_in_queue << ","
              << num_in_service << "," << errors << "\n";
 
         clock++;
