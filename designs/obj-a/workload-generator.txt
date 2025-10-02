@@ -1,0 +1,7 @@
+Idea is this we generate a synthetic workload given a distribution type and interval of time.
+
+Input: distribution type, time interval
+Output: wl.csv format specified in examples/obj-a
+
+Code can be in Python or R
+Numpy should be used for ease of development
