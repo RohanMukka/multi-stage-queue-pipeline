@@ -1,0 +1,11 @@
+The goal here is to take in a specified queue metrics file and filter by the specified queue.
+This is given via cli arguements.
+
+Input: queue-met.csv and a list of the queues we want to filter by.
+
+Example:
+./filter-by-queue.o queue-met-sample.csv 1 3
+
+This means we want to filter down queue-met-sample.csv to only show queue's 1 and 3
+
+Output: queue-met-out.csv which is the same metrics file minus every queue that has been chosen to be displayed.
