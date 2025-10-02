@@ -1,0 +1,10 @@
+Goal here is to take in a jobs.log file that is output by a queue and a list of jobs that we want to see.
+
+Input: jobs.log file and the # of the job that we want shown 
+
+Example- python3 filter-by-job jobs.log 1 3 6
+
+Output: we get a jobs-filter.log file back that will only show events regarding job 1,3,6
+
+Program can be written in Python or R 
+- Resulting .log file should have the same fields as the input
