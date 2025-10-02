@@ -1,6 +1,6 @@
 parameter,value
 limit,5000
-max_queue_size,100
+max_queue_size,500
 queue_id,q0
 server_id,0
 server_function_rate, 10
