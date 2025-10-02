@@ -1,0 +1,15 @@
+The idea here is to take in a quese.csv file that contains statistics about our queue and output plots that showcase them.
+
+Input: quse.csv 
+Example: python3 plot-use.py quese.csv
+
+output:
+- Our output will be one plot showcasing 3 things
+- Utilization vs time-step
+- Saturation vs time-step
+- Error rate vs time-step
+
+Example output:
+- Example plot can be seen in examples/obj-c
+- It has been reccomended that each queue is plotted with a unique color
+- the different time intervals belonging to a single queue should be shades of the same color.
