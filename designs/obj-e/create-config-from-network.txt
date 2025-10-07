@@ -1,0 +1,7 @@
+- We will take in a network file of edges that will define out network of queues
+
+Compute:
+- This network file only gives us the connections between our nodes
+- It is up to us to define the actual config of the queues
+- The program should have either a set config it applies to all nodes, or
+be configureable so that we can fit it to model specific problems we are looking at

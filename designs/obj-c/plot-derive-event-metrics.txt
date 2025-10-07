@@ -1,0 +1,13 @@
+- The idea with this is that we have a plotting program that has two modes hist and scatter.
+
+Hist:
+- We take in the emetric.csv and a arguement specifying which field we want plotted.
+- for example it could be ./plot-derive-event-metrics inputfile.csv output.png --hist="arrival-time"
+- with that input we would plot a histogram of arrival time for every row present
+
+Scat:
+- We take in the emetric.csv and two arguments specifying the name of two columns you want plotted vs eachother
+- for example it could be ./plot-derive-event-metrics inputfile.csv output.png --scat="arrival-time,response-time"
+
+- style of plots can be seen in the slides
+- typical matplotlib is fine here

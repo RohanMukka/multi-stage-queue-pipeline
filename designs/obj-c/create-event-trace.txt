@@ -1,0 +1,16 @@
+The idea is that we take our log of each job and create a plot of each jobs lifecycle through the system.
+
+Input:
+- job.log which specifies each job and every event that happens to it.
+- out.png which is the name we want our output to have
+
+compute:
+- We need to parse every event for a job
+- Points on our plot will correspond to specific actions that can happen to a job
+- each event has a specific symbol that should be followed
+- If the job is moving between queue's there should be differnt colors so that it is clear where that switch happens
+
+Output:
+- The style of the output is specified in the slide deck
+- each job should be spaced out from another so that it is readable
+- time on the x axis and job-id on the y axis
