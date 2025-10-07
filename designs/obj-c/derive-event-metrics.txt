@@ -1,0 +1,22 @@
+- The idea is that we take in our event log and for each job we compute statistics related to It
+
+Input:
+- Event log file that has every event relating to every job that passes through our system.
+- We also take in the name of the output file that we are writing to
+- You should override whatever is existing in the file.
+
+Compute:
+- Each row is a job and all of its computed attributes
+- Arrival time (when the job entered the queue)
+- Time in queue how long the job spent in queue waiting
+- Time in service, how long the job spent being serviced
+- Reponse time, time until it first enters a server
+- Turn around time = time in queue + time in service
+
+Note:
+- A job can enter a queue multiple times, and each visit would be a new row
+
+Output:
+- output to a csv as specified
+- format is in in examples/obj-c 
+- see slides for further clarification on how each metric should be calculated
