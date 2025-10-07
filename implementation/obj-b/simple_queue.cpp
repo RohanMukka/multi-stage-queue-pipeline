@@ -3,74 +3,65 @@
 #include <sstream>
 #include <vector>
 #include <queue>
-#include <tuple>
 #include <string>
 #include <regex>
-#include <algorithm>
 #include <unordered_map>
 #include <optional>
-
 using namespace std;
+
+// Each task keeps both its original index and workload
+struct Task {
+    int index;
+    int work;
+};
 
 struct Job {
     string id;
     int arrival;
-    vector<int> tasks; // workloads for each task
+    vector<Task> tasks;
 };
 
-// Struct to manage the active job and its current task
 struct ActiveJob {
     Job job;
     int currentTask = 0;
     int service_time_left = 0;
 };
 
-// Helper to trim whitespace
 string trim(const string &s) {
     auto start = s.find_first_not_of(" \t\r\n");
     auto end = s.find_last_not_of(" \t\r\n");
-    if (start == string::npos)
-        return "";
+    if (start == string::npos) return "";
     return s.substr(start, end - start + 1);
 }
 
-// Parse tasks string into vector of workloads
-vector<int> parseTasks(const string &taskStr) {
-    regex workloadRegex(R"(W\s+(\d+))"); // capture numbers after 'W '
-    vector<int> tasks;
-
-    auto begin = sregex_iterator(taskStr.begin(), taskStr.end(), workloadRegex);
-    auto end = sregex_iterator();
-    for (auto i = begin; i != end; ++i) {
-        tasks.push_back(stoi((*i)[1].str())); // group(1) = workload
+// Parse "0: W 10", "1: W 20" into vector<Task>
+vector<Task> parseTasks(const string &taskStr) {
+    regex workloadRegex(R"((\d+):\s*W\s*(\d+))");
+    vector<Task> tasks;
+    for (auto it = sregex_iterator(taskStr.begin(), taskStr.end(), workloadRegex);
+         it != sregex_iterator(); ++it) {
+        int idx = stoi((*it)[1].str());
+        int val = stoi((*it)[2].str());
+        tasks.push_back({idx, val});
     }
     return tasks;
 }
 
-// Read config CSV into a map
 unordered_map<string, string> readConfig(const string &cfgFile) {
     unordered_map<string, string> config;
     ifstream infile(cfgFile);
-    if (!infile.is_open()) {
-        cerr << "Error opening config file: " << cfgFile << endl;
-        exit(1);
-    }
-
     string line;
     while (getline(infile, line)) {
-        if (line.empty())
-            continue;
+        if (line.empty()) continue;
         stringstream ss(line);
-        string key, value;
+        string key, val;
         getline(ss, key, ',');
-        getline(ss, value, ',');
+        getline(ss, val, ',');
         key = trim(key);
-        value = trim(value);
-        if (!key.empty() && key != "parameter") {
-            config[key] = value;
-        }
+        val = trim(val);
+        if (!key.empty() && key != "parameter")
+            config[key] = val;
     }
-    infile.close();
     return config;
 }
 
@@ -82,174 +73,108 @@ int main(int argc, char *argv[]) {
 
     string filename = argv[1];
     string cfgFile = argv[2];
+    auto cfg = readConfig(cfgFile);
 
-    // --- Read config ---
-    auto config = readConfig(cfgFile);
+    int limit = stoi(cfg["limit"]);
+    int max_q = stoi(cfg["max_queue_size"]);
+    string qid = cfg["queue_id"], sid = cfg["server_id"];
+    int rate = stoi(cfg["server_function_rate"]);
 
-    int limit = stoi(config["limit"]);
-    int max_queue_size = stoi(config["max_queue_size"]);
-    string queue_id = config["queue_id"];
-    string server_id = config["server_id"];
-
-    // --- Sink file ---
-    string sink_file = config.count("sink") ? config["sink"] : "out0.wl";
-    ofstream sinkOut(sink_file);
+    string sinkFile = cfg.count("sink") ? cfg["sink"] : "out0.wl";
+    ofstream sinkOut(sinkFile);
     sinkOut << "job_id,arrival,Tasks\n";
 
-    // --- Read jobs file ---
-    ifstream infile(filename);
-    if (!infile.is_open()) {
+    ofstream jlog("job.log");
+    ofstream qmet("qmet.csv");
+    qmet << "time-step,queue-sys-id,num-jobs-in-queue,num-jobs-in-service,num-of-errors\n";
+
+    // Load jobs
+    ifstream in(filename);
+    if (!in.is_open()) {
         cerr << "Error opening jobs file: " << filename << endl;
         return 1;
     }
 
-    vector<Job> jobs;
     string line;
-    while (getline(infile, line)) {
-        if (line.empty())
-            continue;
-
+    vector<Job> jobs;
+    while (getline(in, line)) {
+        if (line.empty()) continue;
         stringstream ss(line);
-        string id, arrivalStr, taskStr;
-
+        string id, arrStr, taskStr;
         getline(ss, id, ',');
-        getline(ss, arrivalStr, ',');
+        getline(ss, arrStr, ',');
         getline(ss, taskStr, '\n');
-
         id = trim(id);
-        arrivalStr = trim(arrivalStr);
+        arrStr = trim(arrStr);
         taskStr = trim(taskStr);
+        if (id == "job_id") continue;
 
-        if (id == "job_id" || arrivalStr == "arrival")
-            continue;
-
-        if (!taskStr.empty() && taskStr.front() == '"') {
+        if (!taskStr.empty() && taskStr.front() == '"')
             taskStr = taskStr.substr(1, taskStr.size() - 2);
-        }
 
-        try {
-            int arrival = stoi(arrivalStr);
-            vector<int> tasks = parseTasks(taskStr);
-            jobs.push_back({id, arrival, tasks});
-        } catch (const exception &e) {
-            cerr << "Parse error on line: " << line << "\n";
-            cerr << "  what(): " << e.what() << "\n";
-        }
+        // Fix duplicated quotes if any
+        for (size_t pos = taskStr.find("\"\""); pos != string::npos; pos = taskStr.find("\"\"", pos))
+            taskStr.replace(pos, 2, "\"");
+
+        int arr = stoi(arrStr);
+        vector<Task> tasks = parseTasks(taskStr);
+        jobs.push_back({id, arr, tasks});
     }
-    infile.close();
 
-    // --- Simulation setup ---
-    int clock = 0;
-    int errors = 0;
+    queue<Job> q;
+    optional<ActiveJob> current;
+    int clock = 0, errors = 0;
 
-    queue<Job> work_queue;
-    optional<ActiveJob> current_job;
-
-    // --- Load new server function config ---
-    int server_function_rate = stoi(config["server_function_rate"]);
-    int server_function = stoi(config["server_function"]);
-
-    ofstream qmet("qmet.csv");
-    qmet << "time-step,queue-sys-id,num-jobs-in-queue,num-jobs-in-service,num-of-errors\n";
-
-    ofstream jlog("job.log");
-
-    // --- Simulation loop ---
     while (clock < limit) {
-        string input_edge = filename;
-        size_t pos = filename.find_last_of("/\\");
-        if (pos != string::npos)
-            input_edge = filename.substr(pos + 1);
-
-        // --- Handle new arrivals ---
+        // Handle arrivals
         while (!jobs.empty() && jobs.front().arrival == clock) {
             Job j = jobs.front();
             jobs.erase(jobs.begin());
-
-            jlog << clock << " " << j.id << " IN " << queue_id << " ARRIVE-VIA " << input_edge << "\n";
-
-            if ((int)work_queue.size() >= max_queue_size) {
+            jlog << clock << " " << j.id << " IN " << qid << " ARRIVE-VIA " << filename << "\n";
+            if ((int)q.size() >= max_q) {
                 errors++;
-                jlog << clock << " " << j.id << " IN " << queue_id << " ERROR QUEUE-FULL\n";
-            } else {
-                work_queue.push(j);
-            }
+                jlog << clock << " " << j.id << " IN " << qid << " ERROR QUEUE-FULL\n";
+            } else q.push(j);
         }
 
-        // --- Process server job ---
-        if (current_job.has_value()) {
-            // Process workload only at defined rate
-            if (clock % server_function_rate == server_function_rate - 1) {
-                current_job->service_time_left -= server_function;
+        // Process one job at Sub-X rate
+        if (current && clock % rate == rate - 1) {
+            Job &jb = current->job;
 
-                // Task finished
-                if (current_job->service_time_left <= 0) {
-                    jlog << clock << " " << current_job->job.id << " IN " << queue_id
-                         << " TASK-END " << current_job->currentTask
-                         << " \"W 0\"\n";
+            // Remove the first completed task
+            if (!jb.tasks.empty())
+                jb.tasks.erase(jb.tasks.begin());
 
-                    current_job->currentTask++;
+            jlog << clock << " " << jb.id << " IN " << qid
+                 << " EXITS-SERVER " << sid << "\n";
+            jlog << clock << " " << jb.id << " IN " << qid
+                 << " DEPART-VIA " << sinkFile << "\n";
 
-                    // Move to next task if any remain
-                    if (current_job->currentTask < (int)current_job->job.tasks.size()) {
-                        current_job->service_time_left = current_job->job.tasks[current_job->currentTask];
-
-                        jlog << clock << " " << current_job->job.id << " IN " << queue_id
-                             << " TASK-START " << current_job->currentTask
-                             << " \"W " << current_job->service_time_left << "\"\n";
-                    } else {
-                        // Job fully complete
-                        jlog << clock << " " << current_job->job.id << " IN " << queue_id
-                             << " EXITS-SERVER " << server_id << "\n";
-
-                        jlog << clock << " " << current_job->job.id << " IN " << queue_id
-                             << " DEPART-VIA " << sink_file << "\n";
-
-                        // Write to sink workload with ["Done"]
-                        sinkOut << current_job->job.id << "," << clock << ",[\"Done\"]\n";
-
-                        current_job.reset();
-                    }
+            // ✅ Print remaining tasks (keep original indices)
+            if (!jb.tasks.empty()) {
+                sinkOut << jb.id << "," << clock + 1 << ",[";
+                for (size_t i = 0; i < jb.tasks.size(); ++i) {
+                    sinkOut << "\"" << jb.tasks[i].index << ": W " << jb.tasks[i].work << "\"";
+                    if (i + 1 < jb.tasks.size()) sinkOut << ", ";
                 }
+                sinkOut << "]\n";
             }
+
+            current.reset();
         }
 
-        // --- Move next job from queue into service if free ---
-        if (!current_job.has_value() && !work_queue.empty()) {
-            Job j = work_queue.front();
-            work_queue.pop();
-
-            current_job = ActiveJob{j, 0, j.tasks.empty() ? 0 : j.tasks[0]};
-
-            jlog << clock << " " << j.id << " IN " << queue_id
-                 << " ENTERS-SERVER " << server_id << "\n";
-            if (!j.tasks.empty()) {
-                jlog << clock << " " << j.id << " IN " << queue_id
-                     << " TASK-START 0 \"W " << current_job->service_time_left << "\"\n";
-            } else {
-                // Handle zero-task jobs immediately
-                jlog << clock << " " << j.id << " IN " << queue_id
-                     << " EXITS-SERVER " << server_id << "\n";
-                jlog << clock << " " << j.id << " IN " << queue_id
-                     << " DEPART-VIA " << sink_file << "\n";
-                sinkOut << j.id << "," << clock << ",[\"Done\"]\n";
-                current_job.reset();
-            }
+        // Move next job into service if free
+        if (!current && !q.empty()) {
+            Job j = q.front(); q.pop();
+            current = ActiveJob{j, 0, j.tasks.empty() ? 0 : j.tasks[0].work};
+            jlog << clock << " " << j.id << " IN " << qid
+                 << " ENTERS-SERVER " << sid << "\n";
         }
 
-        // --- Write queue metrics ---
-        int num_in_queue = (int)work_queue.size();
-        int num_in_service = current_job.has_value() ? 1 : 0;
-        qmet << clock << "," << queue_id << "," << num_in_queue << ","
-             << num_in_service << "," << errors << "\n";
-
+        qmet << clock << "," << qid << "," << q.size() << "," << (current ? 1 : 0) << "," << errors << "\n";
         clock++;
     }
 
-    qmet.close();
-    jlog.close();
-    sinkOut.close();
-
-    cout << "Simulation complete. Outputs: qmet.csv, job.log, " << sink_file << "\n";
+    cout << "Simulation complete. Outputs: qmet.csv, job.log, " << sinkFile << "\n";
     return 0;
 }
