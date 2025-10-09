@@ -1,0 +1,14 @@
+The idea is that we take in the sysmetric.csv file that derive-sys-metrics generates and plot a time-series.
+
+Input: sysmetric.csv that has all of our time series data to be plotted
+
+Compute:
+- We need to create one time series plot that has all the response time metrics 
+- A second plot which measures throughput vs timestep 
+- Format of sysmetric is defined in examples/obj-c
+- example plots exist in the slide deck
+
+Output- 
+- Our two plots combined into one png ideally
+- We want this to be readable with standard data
+- Should be titled and labled

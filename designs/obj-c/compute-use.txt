@@ -1,0 +1,20 @@
+The idea here is to take in a queue-met.csv and compute lots of statistics.
+
+Things to compute:
+- Average utilization
+- Average saturation
+- Total errors seen
+
+These will all be computed over different time scales (10,100,1000) time steps
+
+Utilization is the % of time a job is in the server
+Saturation is the number of jobs queueing
+Errors is the rate of errors that are originating in that queue
+
+Input- qmet.csv 
+Example- python3 qmet.csv
+
+
+Example output:
+- a queue use metrics file that can be put into a plotting program.
+- The output format can be seen on slide 18 of the provided presentation.

@@ -1,0 +1,16 @@
+The idea here is that we take in the event log and track various statistics related to jobs.
+- This should be for all jobs in our system not just one queue at a time. 
+- It should generate time-series data the format of which is specified by the slide deck
+
+Input: job.log which contains every event corresponding to every job in our system
+
+Compute: all at a specific time step
+- Average response time
+- Median response time
+- 10th percentile response time
+- 90th percentile response time
+- throughput (jobs in system at the timestep)
+
+It is important all of this is to do with jobs that exit at the specific timestep we are looking at
+
+Output: sysmetric.csv format specified in slide deck and example in examples/obj-c
