@@ -1,0 +1,2 @@
+job_id,queue_id,arrival_time,time_in_queue,time_in_service,response_time,turnaround_time
+j0,q0,0,0,20,0,20
