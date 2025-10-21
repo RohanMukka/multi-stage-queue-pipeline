@@ -1,3 +1,5 @@
+#To run this code run the below command
+#python .\create_config_from_mtx.py .\graphs\facebook_combined.mtx .\outputs\qconf_facebook.csv --undirected true --one_based true
 #!/usr/bin/env python3
 import argparse, csv, sys
 import numpy as np
@@ -81,7 +83,7 @@ def main():
                 edges_out              # Edges out
             ])
 
-    print(f"✅ Created {args.qconf_out} for {N} queues. Undirected={undirected}, One-based shift={'on' if one_based else 'off'}.")
+    print(f" Created {args.qconf_out} for {N} queues. Undirected={undirected}, One-based shift={'on' if one_based else 'off'}.")
 
 if __name__ == "__main__":
     main()

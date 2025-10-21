@@ -1,3 +1,5 @@
+# to run this code use the below command
+#python .\convert_txt_to_mtx.py .\graphs\facebook_combined.txt .\graphs\facebook_combined.mtx
 #!/usr/bin/env python3
 import sys
 
@@ -31,4 +33,4 @@ with open(output_file, "w") as f:
     for u, v in edges:
         f.write(f"{u+1} {v+1}\n")  # +1 because MatrixMarket is 1-based
 
-print(f"✅ Wrote {output_file} with {num_nodes} nodes and {num_edges} edges.")
+print(f" Wrote {output_file} with {num_nodes} nodes and {num_edges} edges.")
