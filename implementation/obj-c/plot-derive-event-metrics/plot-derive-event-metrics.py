@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def main():
     if len(sys.argv) < 4:
-        print("Usage: python ./plot-system-metrics <input_csv> <output_png>")
+        print("Usage: python ./plot-derive-event-metrics <input_csv> <output_png>")
         sys.exit(1)
     
     csv_file = sys.argv[1]
