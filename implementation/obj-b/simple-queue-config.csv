@@ -1,5 +1,5 @@
 parameter,value
-limit,5000
+limit,600
 max_queue_size,800
 queue_id,q0
 server_id,0
