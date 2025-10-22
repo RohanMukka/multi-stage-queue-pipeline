@@ -1,0 +1,8 @@
+parameter,value
+limit,600
+max_queue_size,800
+queue_id,q0
+server_id,0
+server_function,10
+server_function_rate,10
+sink,out.csv
