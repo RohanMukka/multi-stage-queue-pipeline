@@ -1,0 +1,57 @@
+[
+  {
+    "Queue sys ID": "q0",
+    "Max Queue Size": 8,
+    "# of Servers": 1,
+    "Server Function": "Sub-10",
+    "Server Function Rate": 10,
+    "Source": "in0.csv",
+    "Sink": "out0.csv",
+    "Edges in": [],
+    "Edges out": ["q1"]
+  },
+  {
+    "Queue sys ID": "q1",
+    "Max Queue Size": 10,
+    "# of Servers": 2,
+    "Server Function": "Sub-20",
+    "Server Function Rate": 15,
+    "Source": "in1.csv",
+    "Sink": "out1.csv",
+    "Edges in": ["q0"],
+    "Edges out": ["q2", "q3"]
+  },
+  {
+    "Queue sys ID": "q2",
+    "Max Queue Size": 12,
+    "# of Servers": 1,
+    "Server Function": "Sub-15",
+    "Server Function Rate": 12,
+    "Source": "in2.csv",
+    "Sink": "out2.csv",
+    "Edges in": ["q1"],
+    "Edges out": ["q4"]
+  },
+  {
+    "Queue sys ID": "q3",
+    "Max Queue Size": 6,
+    "# of Servers": 1,
+    "Server Function": "Sub-5",
+    "Server Function Rate": 8,
+    "Source": "in3.csv",
+    "Sink": "out3.csv",
+    "Edges in": ["q1"],
+    "Edges out": ["q4"]
+  },
+  {
+    "Queue sys ID": "q4",
+    "Max Queue Size": 20,
+    "# of Servers": 3,
+    "Server Function": "Sub-30",
+    "Server Function Rate": 20,
+    "Source": "in4.csv",
+    "Sink": "out4.csv",
+    "Edges in": ["q2", "q3"],
+    "Edges out": []
+  }
+]

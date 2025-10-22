@@ -1,0 +1,12 @@
+%%MatrixMarket matrix coordinate pattern general
+% Adjacency matrix for 10 queues connected in a chain
+10 10 9
+1 2
+2 3
+3 4
+4 5
+5 6
+6 7
+7 8
+8 9
+9 10
