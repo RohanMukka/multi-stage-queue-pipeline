@@ -28,14 +28,16 @@ Luke, Noah, Rohan, Sai
 
 # Objective C: Tooling
 
-An
+Luke, An
 
 # Objective E: Event Log Pretty Printer 
+Rohan, Sai
 
 * Should be in terminal  
 * X-axis is queue, y-axis is time, jobs are color coded
 
 # Objective E: Network Config Generator
+Noah
 
 * For 10s of queues, hardcode our own model  
 * For 100s and 1000s of queues, use models from [SNAP](https://snap.stanford.edu/data/index.html)
