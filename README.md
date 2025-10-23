@@ -37,7 +37,6 @@ Rohan, Sai
 * X-axis is queue, y-axis is time, jobs are color coded
 
 # Objective E: Network Config Generator
-Noah
 
 * For 10s of queues, hardcode our own model  
 * For 100s and 1000s of queues, use models from [SNAP](https://snap.stanford.edu/data/index.html)
