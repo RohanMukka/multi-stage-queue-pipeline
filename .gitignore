@@ -1,1 +1,22 @@
-venv
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Compiled binaries
+*.exe
+*.out
+implementation/obj-b/exe
+implementation/obj-e/sim
+
+# Git bundles / archives accidentally generated inside the tree
+*.bundle
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/settings.json
