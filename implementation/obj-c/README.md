@@ -29,7 +29,12 @@ python filter_by_job.py sample1.log j0 j1 -o filtered.log
 python derive-event-metrics/derive-event-metrics.py job.log emetric.csv
 python derive-system-metrics/derive-system-metrics.py job.log sysmetric.csv
 python compute-use/compute-use.py qmet.csv quse.csv
+python compute-use/compute-use.py qmet.csv quse.csv --queue=q1   # pick one of several queues
 ```
+
+`compute-use` reports each metric over trailing 10/100/1000-tick
+windows: utilization as the mean jobs in the server, saturation as the
+mean jobs waiting, and errors as those originating inside the window.
 
 ## Plotting
 
@@ -46,8 +51,15 @@ python plot-derive-event-metrics/plot-derive-event-metrics.py emetric.csv out.pn
 ```
 
 `plot-derive-event-metrics/create_all_histograms.sh` and
-`create_all_scat.sh` sweep every numeric column so you don't have to call
-the plotting script by hand for each field.
+`create_all_scat.sh` sweep all five metrics — every column, and every
+pairing of them — so you don't have to call the plotting script by hand
+for each field. Both take an input CSV and an output directory,
+defaulting to the worked example:
+
+```bash
+bash plot-derive-event-metrics/create_all_histograms.sh                 # analysis/simple
+bash plot-derive-event-metrics/create_all_scat.sh build/demo/emetric.csv build/demo/scatter
+```
 
 ## Typical pipeline
 
