@@ -4,7 +4,9 @@ __pycache__/
 venv/
 .venv/
 
-# Compiled binaries
+# Compiled binaries and build output
+bin/
+build/
 *.exe
 *.out
 implementation/obj-b/exe
