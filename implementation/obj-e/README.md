@@ -43,9 +43,21 @@ task off each job per hop and writing the remaining jobs to the next
 queue's input file:
 
 ```bash
-g++ -O2 -o sim main.cpp
-./sim   # reads in.csv, writes out0.csv .. out4.csv
+g++ -O2 -std=c++17 -o sim main.cpp
+
+./sim                           # defaults: in.csv, 5 queues, out0.csv .. out4.csv
+./sim workload.csv 3 stage_     # 3 queues, writes stage_0.csv .. stage_2.csv
+./sim --help
 ```
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `jobs.csv` | `in.csv` | Workload CSV feeding the first queue |
+| `queue_count` | `5` | How many queues to chain |
+| `out_prefix` | `out` | Prefix for the per-queue output CSVs |
+
+The run stops early once every job has run out of tasks, so a long chain
+won't emit empty trailing files.
 
 Vendors [nlohmann/json](https://github.com/nlohmann/json) (`json.hpp`) for
 config parsing.

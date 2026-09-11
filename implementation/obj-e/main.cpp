@@ -105,17 +105,36 @@ void writeJobsToCSV(const std::string &filename, const std::vector<Job> &jobs) {
 // Main simulation
 // ---------------------------
 
-int main() {
-    // Change this to match your starting file name
-    std::string inputFile = "in.csv";
-    int queueCount = 5;
+int main(int argc, char *argv[]) {
+    if (argc > 1 && (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help")) {
+        std::cout << "Usage: " << argv[0] << " [jobs.csv] [queue_count] [out_prefix]\n"
+                  << "  jobs.csv     workload CSV to feed the first queue (default: in.csv)\n"
+                  << "  queue_count  number of queues to chain (default: 5)\n"
+                  << "  out_prefix   prefix for per-queue output CSVs (default: out)\n";
+        return 0;
+    }
 
-    std::cout << "Looking for input file in: " 
-              << std::filesystem::current_path() << "\n";
+    std::string inputFile = (argc > 1) ? argv[1] : "in.csv";
+    int queueCount = 5;
+    std::string outPrefix = (argc > 3) ? argv[3] : "out";
+
+    if (argc > 2) {
+        try {
+            queueCount = std::stoi(argv[2]);
+        } catch (const std::exception &) {
+            std::cerr << "Error: queue_count must be an integer, got '" << argv[2] << "'\n";
+            return 1;
+        }
+        if (queueCount < 1) {
+            std::cerr << "Error: queue_count must be at least 1\n";
+            return 1;
+        }
+    }
 
     std::vector<Job> jobs = readJobsFromCSV(inputFile);
     if (jobs.empty()) {
-        std::cerr << "No jobs loaded. Exiting.\n";
+        std::cerr << "No jobs loaded from " << inputFile
+                  << " (working directory: " << std::filesystem::current_path() << "). Exiting.\n";
         return 1;
     }
 
@@ -136,7 +155,7 @@ int main() {
             }
         }
 
-        std::string outFile = "out" + std::to_string(q) + ".csv";
+        std::string outFile = outPrefix + std::to_string(q) + ".csv";
         writeJobsToCSV(outFile, remainingJobs);
         std::cout << "Wrote final output for q" << q << " → " << outFile << "\n";
 
