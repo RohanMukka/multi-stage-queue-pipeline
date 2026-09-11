@@ -13,6 +13,16 @@ implementation/obj-e/sim
 # Git bundles / archives accidentally generated inside the tree
 *.bundle
 
+# Simulator / tooling run output. Sample inputs are committed alongside each
+# tool; regenerated results are not. Curated results live in analysis/.
+implementation/obj-a/workloads/
+implementation/obj-b/job.log
+implementation/obj-b/qmet.csv
+implementation/obj-b/out.csv
+implementation/obj-e/out*.csv
+implementation/obj-c/**/*.png
+implementation/obj-c/filteredjobs.log
+
 # OS cruft
 .DS_Store
 Thumbs.db
