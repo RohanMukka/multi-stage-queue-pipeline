@@ -42,17 +42,30 @@ live under [`examples/`](examples).
 ## Quick start
 
 ```bash
-# Python tooling (generator, visualizer, analytics suite)
-python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+make demo
+```
 
+`make demo` generates a workload, simulates it, derives per-job and
+system metrics, and writes the plots to `build/demo/` — the whole
+pipeline in one command. Override the workload to explore a different
+regime:
+
+```bash
+make demo DIST=normal END=500    # see `make help` for all targets
+```
+
+<details>
+<summary>Running the stages by hand</summary>
+
+```bash
 # 1. Generate a workload
 python implementation/obj-a/generator.py --start 0 --end 100 --dist poisson --lam 3 \
   --tasks-per-job 2 --task-mode fixed --task-fixed-len 10 --out workload.csv
 
 # 2. Run it through the single-queue simulator
-g++ -O2 -o implementation/obj-b/exe implementation/obj-b/simple_queue.cpp
-implementation/obj-b/exe workload.csv implementation/obj-b/simple-queue-config.csv
+g++ -O2 -std=c++17 -o bin/simple-queue implementation/obj-b/simple_queue.cpp
+bin/simple-queue workload.csv implementation/obj-b/simple-queue-config.csv
 
 # 3. Derive and plot metrics from the resulting job.log
 python implementation/obj-c/derive-event-metrics/derive-event-metrics.py job.log emetric.csv
@@ -60,21 +73,36 @@ python implementation/obj-c/plot-derive-event-metrics/plot-derive-event-metrics.
   emetric.csv response_time_hist.png --hist=response_time
 ```
 
+</details>
+
 ## Worked example: end-to-end analysis
 
-[`analysis/simple`](analysis/simple) runs the full pipeline against a real
-workload (`barista_wl.csv`) and includes the resulting histograms, scatter
-plots, and a short write-up (`DOS_0_Objective-D.pdf`) analyzing queue
-utilization, saturation, and response-time distributions.
+[`analysis/simple`](analysis/simple) runs the full pipeline against a
+barista/coffee-shop workload (`barista_wl.csv`) — jobs arriving faster
+than a single server can drain them.
+
+| Response time vs. arrival time | Response time distribution |
+| --- | --- |
+| ![Response time against arrival time](analysis/simple/scatter/barrista_arrival_vs_response.png) | ![Distribution of response times](analysis/simple/histograms/barrista_response_time.png) |
+
+Response time climbs steadily with arrival time rather than settling:
+the queue never drains, so each arriving job waits behind a longer
+backlog than the last — the signature of an overloaded queue. The full
+set of histograms, scatter plots, and a written analysis
+(`DOS_0_Objective-D.pdf`) is in that directory.
 
 ## Repository layout
 
 ```
-designs/          Design notes per objective (inputs, outputs, approach)
+Makefile           Build the simulators and run the pipeline end to end
+designs/           Design notes per objective (inputs, outputs, approach)
 examples/          Sample input/output files for each stage
 implementation/    Source code, one directory per objective (see table above)
 analysis/          A worked pipeline run + written analysis
 ```
+
+Each tool keeps the small sample inputs it needs to run on its own;
+generated results are written to `build/` and aren't committed.
 
 ## Tech stack
 
